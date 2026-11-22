@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>FSSAI Compliance Engine</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 2rem; background: #f8fafc; color: #1e293b; }
+    h1 { color: #0f172a; }
+    .card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    label { display: block; margin-top: 0.75rem; font-weight: 500; font-size: 0.9rem; }
+    input, select, button { margin-top: 0.25rem; padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 4px; width: 100%; box-sizing: border-box; }
+    button { background: #2563eb; color: #fff; border: none; font-weight: 600; cursor: pointer; margin-top: 1rem; }
+    button:hover { background: #1d4ed8; }
+    .result { margin-top: 1rem; padding: 0.75rem; background: #f1f5f9; border-left: 4px solid #2563eb; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <h1>FSSAI Food Safety &amp; Compliance System</h1>
+
+  <div class="card">
+    <h2>License Category Classifier</h2>
+    <label for="turnover">Annual Turnover (INR):</label>
+    <input type="number" id="turnover" value="15000000" min="0">
+
+    <label>
+      <input type="checkbox" id="multiState" style="width:auto;"> Operates in Multiple States
+    </label>
+
+    <label>
+      <input type="checkbox" id="importerExporter" style="width:auto;"> Importer / Exporter
+    </label>
+
+    <button id="classifyBtn">Classify License</button>
+    <div id="licenseResult" class="result">Result: BASIC_REGISTRATION</div>
+  </div>
+
+  <div class="card">
+    <h2>Batch Recall &amp; Allergen Audit</h2>
+    <div id="statusAudit">Status: Engine operational (2 Lots, 2 Batches loaded)</div>
+  </div>
+
+  <script src="index.js"></script>
+
+</body>
+</html>
