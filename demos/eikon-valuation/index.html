@@ -256,6 +256,27 @@ canvas{background:#0b0714 !important;border:1px solid rgba(168,85,247,0.4) !impo
         <tbody id="candleBody"></tbody>
       </table>
     </div>
+
+    <div class="panel" style="margin-top:16px;">
+      <h2>Valuation vs History — Cheap or Expensive?</h2>
+      <div class="form-group">
+        <label for="curPE">Current P/E</label>
+        <input type="number" id="curPE" value="21.02" step="0.01">
+      </div>
+      <div class="form-group">
+        <label for="avgPE10">10-Year Average P/E</label>
+        <input type="number" id="avgPE10" value="23.20" step="0.01">
+      </div>
+      <div class="form-group">
+        <label for="bondYield">10-Yr Bond Yield (%) — benchmark</label>
+        <input type="number" id="bondYield" value="7.0" step="0.1">
+      </div>
+      <button id="assessBtn">Assess Valuation vs History</button>
+      <div class="results" id="assessResults" style="margin-top:12px;">
+        <div class="card-value" id="assessVerdict" style="font-size:1.1rem; padding:6px 0;">-</div>
+        <div class="metric" id="assessDetail" style="margin-top:6px;">-</div>
+      </div>
+    </div>
   </div>
 
   <script src="index.js"></script>

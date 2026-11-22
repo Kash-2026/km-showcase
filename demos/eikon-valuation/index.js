@@ -204,6 +204,45 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // P/E vs history — the decision layer. Compares a current P/E to its own
+  // long-run average and to a bond benchmark to judge cheap / fair / expensive.
+  function assessValuation(curPE, avgPE, bondYield) {
+    if (!(curPE > 0) || !(avgPE > 0)) throw new Error('P/E values must be > 0');
+    const diff = ((curPE - avgPE) / avgPE) * 100; // % premium (+) / discount (-)
+    let verdict, cls;
+    if (diff <= -10) { verdict = 'UNDERVALUED vs its own history'; cls = 'status-ok'; }
+    else if (diff >= 10) { verdict = 'EXPENSIVE vs its own history'; cls = 'status-conflict'; }
+    else { verdict = 'FAIRLY VALUED vs its own history'; cls = ''; }
+    const earningsYield = 100 / curPE; // %
+    const vsBond = earningsYield - bondYield;
+    return { verdict, cls, diff, earningsYield, vsBond };
+  }
+
+  const assessBtn = document.getElementById('assessBtn');
+  if (assessBtn) {
+    assessBtn.addEventListener('click', () => {
+      try {
+        const curPE = parseFloat(document.getElementById('curPE').value);
+        const avgPE = parseFloat(document.getElementById('avgPE10').value);
+        const bond = parseFloat(document.getElementById('bondYield').value) || 0;
+        const r = assessValuation(curPE, avgPE, bond);
+        const vEl = document.getElementById('assessVerdict');
+        vEl.textContent = r.verdict;
+        vEl.className = 'card-value ' + r.cls;
+        vEl.style.color = r.cls === 'status-ok' ? '#34d399' : (r.cls === 'status-conflict' ? '#f87171' : '#ffffff');
+        const dir = r.diff >= 0 ? 'above' : 'below';
+        const bondTxt = r.vsBond >= 0
+          ? 'equities yield MORE than bonds'
+          : 'equities yield LESS than bonds';
+        document.getElementById('assessDetail').textContent =
+          'Trading ' + Math.abs(r.diff).toFixed(1) + '% ' + dir + ' its 10-yr average. ' +
+          'Earnings yield ' + r.earningsYield.toFixed(2) + '% vs bond ' + bond.toFixed(1) + '% — ' + bondTxt + '.';
+      } catch (e) {
+        alert(e.message);
+      }
+    });
+  }
+
   // Initial valuation render so the page shows values on load.
   if (calcBtn) calcBtn.click();
 });
