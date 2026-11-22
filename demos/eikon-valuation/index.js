@@ -88,12 +88,105 @@ document.addEventListener('DOMContentLoaded', () => {
     { open: 100.0, high: 102.5, low: 95.0, close: 102.0 },
   ];
 
+  function drawCandleChart(candles, ema, patterns) {
+    const canvas = document.getElementById('candleChart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = '#0b1120';
+    ctx.fillRect(0, 0, W, H);
+
+    const padL = 50, padR = 20, padT = 20, padB = 30;
+    const plotW = W - padL - padR;
+    const plotH = H - padT - padB;
+
+    const highs = candles.map(c => c.high);
+    const lows = candles.map(c => c.low);
+    const maxP = Math.max(...highs);
+    const minP = Math.min(...lows);
+    const range = (maxP - minP) || 1;
+    const y = p => padT + (maxP - p) / range * plotH;
+
+    const n = candles.length;
+    const slot = plotW / n;
+    const cw = Math.min(slot * 0.6, 40);
+
+    // grid + y labels
+    ctx.strokeStyle = 'rgba(148,163,184,0.12)';
+    ctx.fillStyle = '#64748b';
+    ctx.font = '10px sans-serif';
+    ctx.textAlign = 'right';
+    for (let g = 0; g <= 4; g++) {
+      const val = maxP - (range * g / 4);
+      const yy = y(val);
+      ctx.beginPath(); ctx.moveTo(padL, yy); ctx.lineTo(W - padR, yy); ctx.stroke();
+      ctx.fillText(val.toFixed(1), padL - 6, yy + 3);
+    }
+
+    // EMA line
+    if (ema) {
+      ctx.beginPath();
+      let started = false;
+      ema.forEach((e, i) => {
+        if (e == null) return;
+        const cx = padL + slot * i + slot / 2;
+        if (!started) { ctx.moveTo(cx, y(e)); started = true; }
+        else ctx.lineTo(cx, y(e));
+      });
+      ctx.strokeStyle = '#f59e0b';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+
+    // candles
+    candles.forEach((c, i) => {
+      const cx = padL + slot * i + slot / 2;
+      const up = c.close >= c.open;
+      const color = up ? '#22c55e' : '#ef4444';
+      // wick
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(cx, y(c.high)); ctx.lineTo(cx, y(c.low)); ctx.stroke();
+      // body
+      const yo = y(c.open), yc = y(c.close);
+      ctx.fillStyle = color;
+      const top = Math.min(yo, yc);
+      const hgt = Math.max(Math.abs(yc - yo), 1.5);
+      ctx.fillRect(cx - cw / 2, top, cw, hgt);
+      // pattern highlight
+      const pats = patterns[i];
+      if (pats && pats.length) {
+        ctx.fillStyle = '#38bdf8';
+        ctx.beginPath();
+        ctx.arc(cx, y(c.high) - 8, 4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    });
+
+    // x labels (index)
+    ctx.fillStyle = '#64748b';
+    ctx.textAlign = 'center';
+    candles.forEach((c, i) => {
+      const cx = padL + slot * i + slot / 2;
+      ctx.fillText(String(i), cx, H - 10);
+    });
+
+    // legend
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#22c55e'; ctx.fillText('▲ up', padL, H - 10);
+    ctx.fillStyle = '#ef4444'; ctx.fillText('▼ down', padL + 50, H - 10);
+    ctx.fillStyle = '#f59e0b'; ctx.fillText('— EMA(3)', padL + 115, H - 10);
+    ctx.fillStyle = '#38bdf8'; ctx.fillText('● pattern', padL + 195, H - 10);
+  }
+
   const patternBtn = document.getElementById('runPatternBtn');
   if (patternBtn) {
     patternBtn.addEventListener('click', () => {
       const closes = sampleCandles.map(c => c.close);
       const ema = computeEma(closes, 3);
       const patterns = detectPatterns(sampleCandles);
+      drawCandleChart(sampleCandles, ema, patterns);
       const body = document.getElementById('candleBody');
       if (!body) return;
       body.innerHTML = '';
