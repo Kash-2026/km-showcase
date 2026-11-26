@@ -245,4 +245,74 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Initial valuation render so the page shows values on load.
   if (calcBtn) calcBtn.click();
+
+  // ---- Ticker loading (real market data from embedded KM_TICKERS) ----
+  const TICKERS = (typeof window !== 'undefined' && window.KM_TICKERS) ? window.KM_TICKERS : {};
+  const sel = document.getElementById('tickerSelect');
+  if (sel) {
+    Object.keys(TICKERS).forEach(sym => {
+      const opt = document.createElement('option');
+      opt.value = sym;
+      opt.textContent = sym + ' — ' + (TICKERS[sym].name || '');
+      sel.appendChild(opt);
+    });
+  }
+
+  function fmtCap(n) {
+    if (!n) return '—';
+    if (n >= 1e12) return (n/1e12).toFixed(2) + 'T';
+    if (n >= 1e9) return (n/1e9).toFixed(2) + 'B';
+    if (n >= 1e6) return (n/1e6).toFixed(2) + 'M';
+    return String(n);
+  }
+
+  function drawTickerChart(candles) {
+    const canvas = document.getElementById('tickerChart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle = '#0b1120'; ctx.fillRect(0,0,W,H);
+    const pad=40, plotW=W-2*pad, plotH=H-2*pad;
+    const highs=candles.map(c=>c.h), lows=candles.map(c=>c.l);
+    const maxP=Math.max(...highs), minP=Math.min(...lows), range=(maxP-minP)||1;
+    const y=p=>pad+(maxP-p)/range*plotH;
+    const n=candles.length, slot=plotW/n, cw=Math.min(slot*0.6,14);
+    // grid
+    ctx.strokeStyle='rgba(168,85,247,0.15)';
+    for(let g=0;g<=4;g++){const yy=pad+plotH*g/4;ctx.beginPath();ctx.moveTo(pad,yy);ctx.lineTo(W-pad,yy);ctx.stroke();}
+    // candles
+    candles.forEach((c,i)=>{
+      const cx=pad+slot*i+slot/2;
+      const up=c.c>=c.o, color=up?'#34d399':'#f87171';
+      ctx.strokeStyle=color; ctx.lineWidth=1.2;
+      ctx.beginPath(); ctx.moveTo(cx,y(c.h)); ctx.lineTo(cx,y(c.l)); ctx.stroke();
+      ctx.fillStyle=color;
+      const yo=y(c.o), yc=y(c.c);
+      ctx.fillRect(cx-cw/2, Math.min(yo,yc), cw, Math.max(Math.abs(yc-yo),1.2));
+    });
+  }
+
+  const loadBtn = document.getElementById('loadTickerBtn');
+  if (loadBtn) {
+    loadBtn.addEventListener('click', () => {
+      const sym = sel ? sel.value : '';
+      const d = TICKERS[sym];
+      if (!d) { alert('Select a ticker first'); return; }
+      const set = (id,v)=>{ const el=document.getElementById(id); if(el) el.textContent = (v===null||v===undefined)?'—':v; };
+      set('tPrice', d.price);
+      set('tPE', d.trailingPE!=null ? d.trailingPE.toFixed(2) : '—');
+      set('tFwdPE', d.forwardPE!=null ? d.forwardPE.toFixed(2) : '—');
+      set('tEPS', d.eps!=null ? d.eps.toFixed(2) : '—');
+      set('tMktCap', fmtCap(d.marketCap));
+      set('t52w', (d.week52high!=null&&d.week52low!=null) ? (d.week52high+' / '+d.week52low) : '—');
+      set('tVol', d.volume ? d.volume.toLocaleString() : '—');
+      const stats=document.getElementById('tickerStats'); if(stats) stats.style.display='block';
+      if (d.candles && d.candles.length) drawTickerChart(d.candles);
+      // also populate the P/E calculator with this ticker's real numbers
+      const pe=document.getElementById('price'); if(pe && d.price) pe.value=d.price;
+      const te=document.getElementById('trailing_eps'); if(te && d.eps) te.value=d.eps;
+      if (calcBtn) calcBtn.click();
+    });
+  }
 });
